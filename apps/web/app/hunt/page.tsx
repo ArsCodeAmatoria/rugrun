@@ -45,26 +45,26 @@ export default function HuntPage() {
     <div className="min-h-screen flex flex-col">
       <Navbar />
       
-      <main className="flex-grow pt-20">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-          <div className="space-y-6">
-            <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+      <main className="flex-grow pt-16 sm:pt-20">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-8">
+          <div className="space-y-4 sm:space-y-6">
+            <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-3 sm:gap-4">
               <motion.div
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.3 }}
               >
-                <h1 className="text-3xl font-bold font-orbitron tracking-tight">
+                <h1 className="text-2xl sm:text-3xl font-bold font-orbitron tracking-tight">
                   <span className="text-transparent bg-clip-text bg-gradient-to-r from-primary to-white">
                     Hunt the Rug
                   </span>
                 </h1>
-                <p className="mt-2 text-zinc-400">
+                <p className="mt-1 sm:mt-2 text-sm sm:text-base text-zinc-400">
                   Find the real wallet and unlock it with the correct phrase
                 </p>
               </motion.div>
               
-              <div className="w-full md:w-72">
+              <div className="w-full md:w-72 mt-2 md:mt-0">
                 <div className="relative">
                   <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-zinc-500" />
                   <input
@@ -72,14 +72,14 @@ export default function HuntPage() {
                     placeholder="Search wallet address or clue..."
                     value={searchQuery}
                     onChange={(e) => setSearchQuery(e.target.value)}
-                    className="pl-9 pr-4 py-2 w-full bg-black/30 border border-zinc-800 rounded-lg focus:outline-none focus:ring-1 focus:ring-primary"
+                    className="pl-9 pr-4 py-2 w-full bg-black/30 border border-zinc-800 rounded-lg focus:outline-none focus:ring-1 focus:ring-primary text-sm"
                   />
                 </div>
               </div>
             </div>
             
             {/* Wallets Grid */}
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
               {filteredWallets.map((wallet) => (
                 <WalletCard 
                   key={wallet.address} 
@@ -90,29 +90,29 @@ export default function HuntPage() {
             </div>
             
             {/* Attempt History */}
-            <div className="mt-16">
+            <div className="mt-12 sm:mt-16">
               <Card className="border-zinc-800 bg-zinc-900/70 backdrop-blur-sm">
-                <CardHeader>
+                <CardHeader className="px-3 sm:px-6 py-3 sm:py-4">
                   <div className="flex items-center justify-between">
-                    <CardTitle className="text-xl text-primary font-orbitron">
-                      <List className="inline-block mr-2 h-5 w-5" /> 
+                    <CardTitle className="text-lg sm:text-xl text-primary font-orbitron">
+                      <List className="inline-block mr-2 h-4 w-4 sm:h-5 sm:w-5" /> 
                       Recent Attempts
                     </CardTitle>
                   </div>
                 </CardHeader>
-                <CardContent>
-                  <div className="overflow-x-auto">
+                <CardContent className="px-3 sm:px-6 py-2 sm:py-3">
+                  <div className="overflow-x-auto -mx-3 sm:-mx-0">
                     <table className="w-full">
                       <thead>
                         <tr className="border-b border-zinc-800">
-                          <th className="text-left py-3 px-2 text-xs text-zinc-500">Wallet</th>
-                          <th className="text-left py-3 px-2 text-xs text-zinc-500">User</th>
-                          <th className="text-left py-3 px-2 text-xs text-zinc-500">Attempt</th>
-                          <th className="text-left py-3 px-2 text-xs text-zinc-500">
+                          <th className="text-left py-2 sm:py-3 px-2 text-xs text-zinc-500">Wallet</th>
+                          <th className="text-left py-2 sm:py-3 px-2 text-xs text-zinc-500">User</th>
+                          <th className="text-left py-2 sm:py-3 px-2 text-xs text-zinc-500">Attempt</th>
+                          <th className="text-left py-2 sm:py-3 px-2 text-xs text-zinc-500">
                             <Clock className="inline-block mr-1 h-3 w-3" /> 
                             Timestamp
                           </th>
-                          <th className="text-left py-3 px-2 text-xs text-zinc-500">Status</th>
+                          <th className="text-left py-2 sm:py-3 px-2 text-xs text-zinc-500">Status</th>
                         </tr>
                       </thead>
                       <tbody>
@@ -121,19 +121,19 @@ export default function HuntPage() {
                             key={index} 
                             className="border-b border-zinc-800/50 hover:bg-black/20 transition-colors"
                           >
-                            <td className="py-3 px-2 text-sm">
+                            <td className="py-2 sm:py-3 px-2 text-xs sm:text-sm">
                               {truncateAddress(attempt.walletAddress)}
                             </td>
-                            <td className="py-3 px-2 text-sm">
+                            <td className="py-2 sm:py-3 px-2 text-xs sm:text-sm">
                               {truncateAddress(attempt.userAddress)}
                             </td>
-                            <td className="py-3 px-2 text-sm font-mono">
+                            <td className="py-2 sm:py-3 px-2 text-xs sm:text-sm font-mono">
                               {attempt.attempt}
                             </td>
-                            <td className="py-3 px-2 text-sm text-zinc-400">
+                            <td className="py-2 sm:py-3 px-2 text-xs sm:text-sm text-zinc-400">
                               {formatTimestamp(attempt.timestamp)}
                             </td>
-                            <td className="py-3 px-2 text-sm">
+                            <td className="py-2 sm:py-3 px-2 text-xs sm:text-sm">
                               <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium ${
                                 attempt.status === "failed" 
                                   ? "bg-red-900/30 text-red-400" 
