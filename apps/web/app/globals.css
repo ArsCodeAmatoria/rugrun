@@ -77,7 +77,7 @@
   z-index: -1;
 }
 
-/* Custom scroll bar */
+/* Custom scroll bar - global */
 ::-webkit-scrollbar {
   width: 8px;
 }
@@ -87,29 +87,55 @@
 }
 
 ::-webkit-scrollbar-thumb {
-  background: #ff007f;
+  background: #4f46e5;
   border-radius: 4px;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background: #ff339a;
+  background: #6366f1;
 }
 
-/* Custom scrollbar styles */
+/* Game specific custom scrollbar styles */
 .custom-scrollbar::-webkit-scrollbar {
-  width: 8px;
+  width: 5px;
 }
 
 .custom-scrollbar::-webkit-scrollbar-track {
-  background: rgba(31, 41, 55, 0.5);
+  background: rgba(0, 0, 0, 0.2);
   border-radius: 4px;
 }
 
 .custom-scrollbar::-webkit-scrollbar-thumb {
-  background: rgba(79, 70, 229, 0.5);
+  background: linear-gradient(to bottom, #6366f1, #8b5cf6);
   border-radius: 4px;
+  border: 1px solid rgba(139, 92, 246, 0.1);
 }
 
 .custom-scrollbar::-webkit-scrollbar-thumb:hover {
-  background: rgba(79, 70, 229, 0.7);
+  background: linear-gradient(to bottom, #4f46e5, #7c3aed);
+  box-shadow: 0 0 8px rgba(99, 102, 241, 0.4);
+}
+
+/* Game page animations */
+@keyframes pulse-glow {
+  0%, 100% {
+    box-shadow: 0 0 5px rgba(99, 102, 241, 0.3);
+  }
+  50% {
+    box-shadow: 0 0 15px rgba(99, 102, 241, 0.5);
+  }
+}
+
+.wallet-glow {
+  animation: pulse-glow 3s infinite;
+}
+
+/* Wallet card hover effect */
+.wallet-card {
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.wallet-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 20px -5px rgba(79, 70, 229, 0.3);
 } 
