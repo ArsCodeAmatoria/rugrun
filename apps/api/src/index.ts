@@ -8,6 +8,7 @@ import { logger } from './utils/logger';
 import walletRoutes from './routes/walletRoutes';
 import attemptRoutes from './routes/attemptRoutes';
 import leaderboardRoutes from './routes/leaderboardRoutes';
+import userRoutes from './routes/userRoutes';
 
 // Load environment variables
 dotenv.config();
@@ -28,6 +29,7 @@ app.use(morgan('dev')); // HTTP request logger
 app.use('/api/wallets', walletRoutes);
 app.use('/api/attempts', attemptRoutes);
 app.use('/api/leaderboard', leaderboardRoutes);
+app.use('/api/user', userRoutes);
 
 // Health check endpoint
 app.get('/health', (req, res) => {

@@ -10,5 +10,10 @@
     "dev": "cd apps/web && npm run dev",
     "build": "cd apps/web && npm run build",
     "start": "cd apps/web && npm run start"
+  },
+  "dependencies": {
+    "@types/uuid": "^10.0.0",
+    "axios": "^1.8.4",
+    "uuid": "^11.1.0"
   }
-} 
+}
