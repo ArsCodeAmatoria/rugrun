@@ -1,6 +1,6 @@
 'use client'
 
-import React, { useState, useEffect } from 'react'
+import React, { useState } from 'react'
 import { useGame } from '@/providers/GameProvider'
 import { motion, AnimatePresence } from 'framer-motion'
 import WalletItem from '@/components/WalletItem'
@@ -121,19 +121,20 @@ const GamePage: React.FC = () => {
                 <div>
                   <h3 className="font-bold text-indigo-200">Instructions:</h3>
                   <ol className="list-decimal list-inside space-y-2 ml-2">
-                    <li>Examine each wallet's address, balance, and clue carefully.</li>
-                    <li>Decoy wallets have misleading clues, while the real wallet's clue holds a genuine hint.</li>
+                    <li>Examine each wallet&apos;s address, balance, and clue carefully.</li>
+                    <li>Decoy wallets have misleading clues, while the real wallet&apos;s clue holds a genuine hint.</li>
                     <li>Select a wallet to attempt unlocking it.</li>
                     <li>Enter your guess for the secret phrase in the unlock form.</li>
-                    <li>If successful, you'll claim the tokens. If not, you'll receive feedback.</li>
+                    <li>If successful, you&apos;ll claim the tokens. If not, you&apos;ll receive feedback.</li>
                   </ol>
                 </div>
-                <div>
+                <div className="bg-gray-800 rounded-lg p-4 mt-4">
                   <h3 className="font-bold text-indigo-200">Tips:</h3>
-                  <ul className="list-disc list-inside space-y-1 ml-2">
-                    <li>The real wallet typically has a higher balance.</li>
-                    <li>Pay close attention to the clues - the real one contains a genuine hint.</li>
-                    <li>The secret is usually related to Haskell programming language.</li>
+                  <ul className="list-disc list-inside space-y-2 ml-2">
+                    <li>Secret phrases may involve wordplay, puns, or references to blockchain concepts.</li>
+                    <li>Don&apos;t overthink - sometimes the simplest answer is correct.</li>
+                    <li>The balance might be a clue about the wallet&apos;s importance.</li>
+                    <li>If you&apos;re stuck, try viewing the wallet&apos;s transaction history.</li>
                   </ul>
                 </div>
                 <div className="bg-black/30 p-3 rounded-lg border border-indigo-500/20 mt-3">
@@ -154,21 +155,21 @@ const GamePage: React.FC = () => {
           initial={{ opacity: 0, scale: 0.9 }}
           animate={{ opacity: 1, scale: 1 }}
           transition={{ delay: 0.1 }}
-          className="bg-white p-5 rounded-lg shadow-md border border-gray-200"
+          className="bg-gradient-to-r from-indigo-900/30 to-purple-900/30 backdrop-blur-md p-5 rounded-lg shadow-md border border-indigo-500/30"
         >
-          <h3 className="text-xl font-semibold text-gray-800 mb-3">Game Stats</h3>
+          <h3 className="text-xl font-semibold text-white mb-3">Game Stats</h3>
           <div className="space-y-3">
             <div>
-              <p className="text-sm text-gray-500">Wallets Unlocked</p>
-              <p className="text-2xl font-bold text-blue-600">{unlockedWallets} / {totalWallets}</p>
+              <p className="text-sm text-indigo-300">Wallets Unlocked</p>
+              <p className="text-2xl font-bold text-indigo-200">{unlockedWallets} / {totalWallets}</p>
             </div>
             <div>
-              <p className="text-sm text-gray-500">Attempts Made</p>
-              <p className="text-2xl font-bold text-indigo-600">{totalAttempts}</p>
+              <p className="text-sm text-indigo-300">Attempts Made</p>
+              <p className="text-2xl font-bold text-indigo-200">{totalAttempts}</p>
             </div>
             <div>
-              <p className="text-sm text-gray-500">Success Rate</p>
-              <p className="text-2xl font-bold text-green-600">{successRate}%</p>
+              <p className="text-sm text-indigo-300">Success Rate</p>
+              <p className="text-2xl font-bold text-indigo-200">{successRate}%</p>
             </div>
           </div>
         </motion.div>
@@ -177,9 +178,9 @@ const GamePage: React.FC = () => {
           initial={{ opacity: 0, scale: 0.9 }}
           animate={{ opacity: 1, scale: 1 }}
           transition={{ delay: 0.2 }}
-          className="bg-white p-5 rounded-lg shadow-md border border-gray-200 lg:col-span-2"
+          className="bg-gradient-to-r from-indigo-900/30 to-purple-900/30 backdrop-blur-md p-5 rounded-lg shadow-md border border-indigo-500/30 lg:col-span-2"
         >
-          <h3 className="text-xl font-semibold text-gray-800 mb-3">Recent Attempts</h3>
+          <h3 className="text-xl font-semibold text-white mb-3">Recent Attempts</h3>
           {userAttempts.length > 0 ? (
             <div className="overflow-y-auto max-h-[12rem]">
               {[...userAttempts].reverse().slice(0, 10).map((attempt, idx) => (
@@ -187,39 +188,39 @@ const GamePage: React.FC = () => {
                   key={idx} 
                   className={`p-3 mb-2 rounded-md text-sm ${
                     attempt.success 
-                      ? 'bg-green-50 border border-green-100' 
-                      : 'bg-red-50 border border-red-100'
+                      ? 'bg-green-900/30 border border-green-500/30' 
+                      : 'bg-red-900/30 border border-red-500/30'
                   }`}
                 >
                   <div className="flex justify-between">
-                    <span className="font-medium">
+                    <span className="font-medium text-white">
                       {attempt.success ? '✅ Success' : '❌ Failed'}
                     </span>
-                    <span className="text-gray-500 text-xs">
+                    <span className="text-indigo-300 text-xs">
                       {new Date(attempt.timestamp).toLocaleTimeString()}
                     </span>
                   </div>
-                  <p className="font-mono text-xs mt-1 truncate">
-                    <span className="text-gray-600">Wallet:</span> {attempt.walletAddress.substring(0, 16)}...
+                  <p className="font-mono text-xs mt-1 truncate text-indigo-200">
+                    <span className="text-indigo-300">Wallet:</span> {attempt.walletAddress.substring(0, 16)}...
                   </p>
-                  <p className="font-mono text-xs mt-1">
-                    <span className="text-gray-600">Phrase:</span> {attempt.attempt}
+                  <p className="font-mono text-xs mt-1 text-indigo-200">
+                    <span className="text-indigo-300">Phrase:</span> {attempt.attempt}
                   </p>
                 </div>
               ))}
             </div>
           ) : (
-            <p className="text-gray-500 italic">No attempts yet. Try unlocking a wallet!</p>
+            <p className="text-indigo-300 italic">No attempts yet. Try unlocking a wallet!</p>
           )}
         </motion.div>
       </div>
 
-      <div className="flex justify-between items-center mb-6">
-        <h2 className="text-2xl font-bold text-gray-800">Challenge Wallets</h2>
+      <div className="flex justify-between items-center mb-6 mt-8">
+        <h2 className="text-2xl font-bold text-white">Challenge Wallets</h2>
         <div className="flex space-x-3">
           <button
             onClick={refreshGameState}
-            className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 transition-colors text-sm font-medium"
+            className="px-4 py-2 bg-indigo-600 text-white rounded hover:bg-indigo-700 transition-colors text-sm font-medium"
           >
             Refresh Wallets
           </button>
@@ -228,7 +229,7 @@ const GamePage: React.FC = () => {
             disabled={isResetting}
             className={`px-4 py-2 text-sm font-medium rounded transition-colors ${
               isResetting 
-                ? 'bg-gray-300 text-gray-500 cursor-not-allowed' 
+                ? 'bg-gray-600/50 text-gray-400 cursor-not-allowed' 
                 : 'bg-red-600 text-white hover:bg-red-700'
             }`}
           >
