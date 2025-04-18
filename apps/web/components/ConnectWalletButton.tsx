@@ -1,20 +1,47 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { useCardano } from '@/providers/CardanoProvider';
+
+// Define wallet type for available wallets
+interface AvailableWallet {
+  name: string;
+  icon?: string;
+}
 
 const ConnectWalletButton: React.FC = () => {
   const { 
     isWalletAvailable, 
     connectedWallet, 
-    connectWallet, 
-    disconnectWallet, 
-    availableWallets,
+    connectWallet,
+    walletAddresses,
     isLoading 
   } = useCardano();
   
   const [showWalletList, setShowWalletList] = useState(false);
+  const [availableWallets, setAvailableWallets] = useState<AvailableWallet[]>([]);
+  
+  // Load available wallets
+  useEffect(() => {
+    const getAvailableWallets = async () => {
+      try {
+        // In a real implementation, we would get this from the cardano bridge
+        // For this mock, we'll create some static wallets
+        setAvailableWallets([
+          { name: 'Nami', icon: '/images/wallets/nami.png' },
+          { name: 'Eternl', icon: '/images/wallets/eternl.png' },
+          { name: 'Flint', icon: '/images/wallets/flint.png' },
+        ]);
+      } catch (err) {
+        console.error('Error getting available wallets', err);
+      }
+    };
+    
+    if (isWalletAvailable) {
+      getAvailableWallets();
+    }
+  }, [isWalletAvailable]);
 
   // Format wallet address for display
   const formatAddress = (address: string) => {
@@ -26,6 +53,13 @@ const ConnectWalletButton: React.FC = () => {
   const handleSelectWallet = async (walletName: string) => {
     setShowWalletList(false);
     await connectWallet(walletName);
+  };
+  
+  // Handle wallet disconnection - in this mock implementation, we'll just connect to an empty wallet
+  const handleDisconnect = async () => {
+    // Since we don't have a disconnectWallet function, we'll just "connect" to an empty string
+    // which should effectively reset the wallet state
+    await connectWallet("");
   };
 
   if (!isWalletAvailable) {
@@ -41,19 +75,23 @@ const ConnectWalletButton: React.FC = () => {
     );
   }
 
+  // Get the wallet address from walletAddresses array
+  const walletAddress = connectedWallet && walletAddresses.length > 0 ? 
+    walletAddresses[0] : '';
+
   if (connectedWallet) {
     return (
       <div className="flex items-center">
         <div className="mr-3 flex items-center">
           <div className="h-2 w-2 rounded-full bg-green-500 mr-2"></div>
           <span className="text-sm text-gray-400">
-            {formatAddress(connectedWallet.address)}
+            {formatAddress(walletAddress)}
           </span>
         </div>
         <motion.button
           whileHover={{ scale: 1.02 }}
           whileTap={{ scale: 0.98 }}
-          onClick={disconnectWallet}
+          onClick={handleDisconnect}
           className="bg-red-600/20 hover:bg-red-600/30 border border-red-700/50 text-red-400 px-3 py-1 text-sm rounded-lg"
         >
           Disconnect

@@ -65,6 +65,14 @@ export const CardanoProvider: React.FC<CardanoProviderProps> = ({ children }) =>
     setError(null);
     
     try {
+      // If walletName is empty, disconnect
+      if (!walletName) {
+        setConnectedWallet(null);
+        setWalletAddresses([]);
+        setIsLoading(false);
+        return false;
+      }
+      
       const connected = await cardanoBridge.connectWallet(walletName);
       
       if (connected) {
@@ -72,7 +80,7 @@ export const CardanoProvider: React.FC<CardanoProviderProps> = ({ children }) =>
         setConnectedWallet({
           name: walletName,
           id: walletName,
-          icon: `/images/wallets/${walletName}.png`,
+          icon: `/images/wallets/${walletName.toLowerCase()}.png`,
           apiVersion: '1.0.0',
           isConnected: true,
           isEnabled: async () => true,
