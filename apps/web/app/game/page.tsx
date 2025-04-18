@@ -31,6 +31,20 @@ const GamePage: React.FC = () => {
       className="container mx-auto py-8 px-4"
     >
       <motion.div variants={itemVariants} className="relative">
+        <div className="absolute left-0 top-2">
+          <motion.a
+            href="/"
+            whileHover={{ scale: 1.05 }}
+            whileTap={{ scale: 0.95 }}
+            className="flex items-center text-indigo-300 hover:text-indigo-200 px-3 py-1 rounded-lg bg-indigo-900/30 border border-indigo-500/30 text-sm"
+          >
+            <svg className="w-5 h-5 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"></path>
+            </svg>
+            Back to Home
+          </motion.a>
+        </div>
+        
         <h1 className="text-4xl md:text-5xl font-bold text-center text-white mb-2">
           <span className="bg-gradient-to-r from-indigo-400 to-purple-500 text-transparent bg-clip-text">
             RugRun Game
@@ -39,6 +53,7 @@ const GamePage: React.FC = () => {
         <p className="text-center text-indigo-300 mb-8">
           Find the real wallet and unlock it with the correct secret phrase
         </p>
+        
         <div className="absolute right-0 top-2">
           <motion.button
             whileHover={{ scale: 1.05 }}
