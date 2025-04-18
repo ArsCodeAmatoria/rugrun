@@ -5,6 +5,8 @@ import StarfieldBackground from '@/components/StarfieldBackground'
 import ParticleBackground from '@/components/ParticleBackground'
 import { Suspense } from 'react'
 import PageTransition from '@/components/PageTransition'
+import { ApiProvider } from '@/providers/ApiProvider'
+import { GameProvider } from '@/providers/GameProvider'
 
 const inter = Inter({ subsets: ['latin'] })
 
@@ -30,9 +32,13 @@ export default function RootLayout({
         </Suspense>
         
         {/* Main content with page transitions */}
-        <PageTransition>
-          {children}
-        </PageTransition>
+        <ApiProvider>
+          <GameProvider>
+            <PageTransition>
+              {children}
+            </PageTransition>
+          </GameProvider>
+        </ApiProvider>
       </body>
     </html>
   )
