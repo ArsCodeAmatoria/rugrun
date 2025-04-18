@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect, ReactNode } from 'react'
+import { useState, useEffect, ReactNode, useMemo } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { cn } from '@/lib/utils'
 
@@ -83,7 +83,9 @@ export function Typewriter({
   cursorColor = '#9333EA'
 }: TypewriterProps) {
   const [displayedContent, setDisplayedContent] = useState<ReactNode[]>([])
-  const childrenArray = Array.isArray(children) ? children : [children]
+  const childrenArray = useMemo(() => 
+    Array.isArray(children) ? children : [children]
+  , [children])
   
   useEffect(() => {
     if (displayedContent.length < childrenArray.length) {

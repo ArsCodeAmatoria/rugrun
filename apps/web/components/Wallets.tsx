@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useEffect, useState } from 'react';
+import React, { useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { useCardano } from '@/providers/CardanoProvider';
 import WalletItem from './WalletItem';
@@ -129,10 +129,10 @@ const Wallets: React.FC = () => {
             <li>Look for clues in the wallet addresses and token amounts.</li>
             <li>Try to identify the real wallet among the decoys.</li>
             <li>Enter the correct secret phrase to unlock the wallet.</li>
-            <li>If successful, you'll receive tokens minus a small fee!</li>
+            <li>If successful, you&apos;ll receive tokens minus a small fee!</li>
           </ol>
           <div className="mt-4 text-sm text-amber-400">
-            <strong>Hint:</strong> The secret phrase for the demo is "<code>haskellrocks</code>"
+            <strong>Hint:</strong> The secret phrase for the demo is &quot;<code>haskellrocks</code>&quot;
           </div>
         </div>
       )}

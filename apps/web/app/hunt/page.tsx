@@ -3,8 +3,6 @@
 import { useState, useEffect } from "react"
 import { motion, AnimatePresence } from "framer-motion"
 import { Search, Clock, List, Sparkles } from "lucide-react"
-import { Button } from "@/components/ui/button"
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import Navbar from "@/components/Navbar"
 import WalletCard from "@/components/WalletCard"
 import { wallets, attemptHistory } from "@/utils/mockWallets"
@@ -13,6 +11,7 @@ import Footer from "@/components/Footer"
 import TypingText from "@/components/ui/typing-text"
 import GlowCard from "@/components/ui/glow-card"
 import { Spinner } from "@/components/ui/spinner"
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 
 export default function HuntPage() {
   const [attempts, setAttempts] = useState(attemptHistory)

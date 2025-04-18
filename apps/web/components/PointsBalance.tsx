@@ -29,7 +29,7 @@ const PointsBalance: React.FC<{ userAddress?: string }> = ({ userAddress }) => {
 
   useEffect(() => {
     fetchBalance()
-  }, [userAddress])
+  }, [userAddress, fetchBalance])
 
   return (
     <div className="w-full max-w-sm mx-auto p-4">
