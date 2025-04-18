@@ -1,115 +1,111 @@
+{-# LANGUAGE OverloadedStrings #-}
+
 module Main where
 
-import qualified Data.ByteString.Lazy       as LBS
-import qualified Data.ByteString            as BS
-import qualified Data.Aeson                 as JSON
-import qualified Data.Text                  as T
-import qualified Data.Text.Encoding         as TE
-import           System.Environment         (getArgs)
-import           System.Exit                (exitFailure, exitSuccess)
-import           System.FilePath            ((</>))
-import           System.Directory           (createDirectoryIfMissing)
-import           Control.Monad              (forM_, when)
+import qualified Data.Aeson           as Aeson
+import qualified Data.ByteString.Lazy as BSL
+import           System.Directory     (createDirectoryIfMissing)
+import           System.Environment   (getArgs)
+import           System.FilePath      ((</>))
+import           System.IO            (hPutStrLn, stderr)
+import           Prelude              hiding (putStrLn)
+import qualified Prelude              as P
+import           Data.List            (intercalate)
 
-import           RugRun.Contract            (rugWalletScript, decoyWalletScript, 
-                                           rugWalletHash, decoyWalletHash)
-import           RugRun.Types
-import           RugRun.Utils               (sha256, verifySecret)
+import           WalletCompiler
+import qualified RugRun.Types as Types
+import qualified RugRun.Validators as Validators
 
-import           Prelude
-import           Plutus.V1.Ledger.Api       (BuiltinByteString)
-import qualified PlutusTx.Builtins          as Builtins
-
--- | Output directories
-outputDir :: FilePath
-outputDir = "output"
-
-scriptsDir :: FilePath
-scriptsDir = outputDir </> "scripts"
-
--- | Export the validator scripts to files in multiple formats
-exportScripts :: IO ()
-exportScripts = do
-  -- Create output directories
-  createDirectoryIfMissing True outputDir
-  createDirectoryIfMissing True scriptsDir
-  
-  -- Export in Plutus format
-  LBS.writeFile (scriptsDir </> "rugWallet.plutus") $ JSON.encode rugWalletScript
-  LBS.writeFile (scriptsDir </> "decoyWallet.plutus") $ JSON.encode decoyWalletScript
-  
-  -- Export hash values
-  writeFile (scriptsDir </> "rugWalletHash.txt") (show rugWalletHash)
-  writeFile (scriptsDir </> "decoyWalletHash.txt") (show decoyWalletHash)
-  
-  -- Export as JSON for the frontend
-  let scriptsJSON = JSON.object [ 
-          "rugWalletScript" JSON..= rugWalletScript
-        , "decoyWalletScript" JSON..= decoyWalletScript
-        , "rugWalletHash" JSON..= show rugWalletHash
-        , "decoyWalletHash" JSON..= show decoyWalletHash
-        ]
-  
-  LBS.writeFile (outputDir </> "contracts.json") $ JSON.encode scriptsJSON
-  
-  putStrLn "Scripts exported to the output directory:"
-  putStrLn $ "- " ++ scriptsDir </> "rugWallet.plutus"
-  putStrLn $ "- " ++ scriptsDir </> "decoyWallet.plutus"
-  putStrLn $ "- " ++ scriptsDir </> "rugWalletHash.txt"
-  putStrLn $ "- " ++ scriptsDir </> "decoyWalletHash.txt"
-  putStrLn $ "- " ++ outputDir </> "contracts.json"
-
--- | Test secret hash verification
-testSecretVerification :: String -> String -> IO ()
-testSecretVerification secretStr expectedHashStr = do
-  let secret = Builtins.toBuiltin $ TE.encodeUtf8 $ T.pack secretStr
-      expectedHash = Builtins.toBuiltin $ TE.encodeUtf8 $ T.pack expectedHashStr
-      computedHash = sha256 secret
-      verified = verifySecret expectedHash secret
-      
-  putStrLn $ "Secret: " ++ secretStr
-  putStrLn $ "Expected hash: " ++ expectedHashStr
-  putStrLn $ "Computed hash: " ++ T.unpack (TE.decodeUtf8 $ Builtins.fromBuiltin computedHash)
-  putStrLn $ "Verification result: " ++ if verified then "VALID" else "INVALID"
-  
-  if verified 
-    then exitSuccess 
-    else exitFailure
-
--- | Display usage information
-printUsage :: IO ()
-printUsage = do
-  putStrLn "RugRun Cardano Contract Tool"
-  putStrLn "============================"
-  putStrLn ""
-  putStrLn "Usage:"
-  putStrLn "  rugrun export                     -- Export all validator scripts"
-  putStrLn "  rugrun verify SECRET HASH         -- Test secret verification"
-  putStrLn "  rugrun hash SECRET                -- Compute hash of a secret"
-  putStrLn "  rugrun help                       -- Show this help message"
-
--- | Compute hash of a secret phrase
-hashSecret :: String -> IO ()
-hashSecret secretStr = do
-  let secret = Builtins.toBuiltin $ TE.encodeUtf8 $ T.pack secretStr
-      computedHash = sha256 secret
-      
-  putStrLn $ "Secret: " ++ secretStr
-  putStrLn $ "Hash: " ++ T.unpack (TE.decodeUtf8 $ Builtins.fromBuiltin computedHash)
+putStrLn :: String -> IO ()
+putStrLn = P.putStrLn
 
 -- | Main entry point
 main :: IO ()
 main = do
-  args <- getArgs
-  case args of
-    ["export"] -> exportScripts
-    
-    ["verify", secret, hash] -> testSecretVerification secret hash
-    
-    ["hash", secret] -> hashSecret secret
-    
-    ["help"] -> printUsage
-    
-    _ -> do
-      putStrLn "Invalid command. Use 'rugrun help' for usage information."
-      printUsage 
+    args <- getArgs
+    case args of
+        ["compile", outputDir, secretPhrase] -> do
+            compileWalletValidator outputDir secretPhrase
+            putStrLn $ "Compiled validator scripts for secret: " ++ secretPhrase
+
+        ["generate-hash", secretPhrase] -> do
+            let hash = generateSecretHash secretPhrase
+            putStrLn $ "Generated hash for secret '" ++ secretPhrase ++ "': " ++ hash
+
+        ["create-game-wallets", outputDir, realSecret, outFile] -> do
+            -- Generate some decoy secrets
+            let decoySecrets = 
+                    [ "monoid"
+                    , "functor"
+                    , "monad"
+                    , "applicative"
+                    , "recursion"
+                    ]
+            
+            putStrLn $ "Creating game wallets with real secret: " ++ realSecret
+            putStrLn $ "Decoy secrets: " ++ intercalate ", " decoySecrets
+            
+            -- Create wallets
+            wallets <- createGameWallets outputDir realSecret decoySecrets
+            
+            -- Write wallet data to JSON file
+            createDirectoryIfMissing True outputDir
+            BSL.writeFile outFile (Aeson.encode wallets)
+            
+            putStrLn $ "Created " ++ show (length wallets) ++ " wallets"
+            putStrLn $ "Wallet data written to: " ++ outFile
+        
+        ["test-validator", secretHash, testSecret] -> do
+            -- Test if a secret validates against a hash
+            let result = validateSecret (read secretHash) (read testSecret)
+            putStrLn $ "Validating secret '" ++ testSecret ++ "' against hash '" ++ secretHash ++ "'"
+            putStrLn $ "Result: " ++ (if result then "VALID!" else "INVALID!")
+            
+        ["compile-validators", outputDir] -> do
+            -- Compile both rug and decoy wallet validators
+            Validators.writeRugWalletValidator (outputDir </> "rug-wallet.plutus")
+            Validators.writeDecoyWalletValidator (outputDir </> "decoy-wallet.plutus")
+            putStrLn $ "Compiled both validators to: " ++ outputDir
+        
+        ["generate-game", outputDir, realSecret, walletCount, outFile] -> do
+            let count = read walletCount
+            
+            -- Generate realistic decoy secrets
+            let decoySecrets = 
+                    [ "monoid", "functor", "monad", "applicative", "recursion",
+                      "cardano", "plutus", "marlowe", "blockchain", "transaction",
+                      "smart_contract", "token", "NFT", "staking", "delegation"
+                    ]
+            
+            putStrLn $ "Creating game with " ++ show count ++ " wallets"
+            putStrLn $ "Real wallet secret: " ++ realSecret
+            
+            -- Ensure enough decoy secrets
+            let requiredDecoys = count - 1
+                actualDecoys = take requiredDecoys decoySecrets
+                
+            if length actualDecoys < requiredDecoys
+                then putStrLn "Warning: Not enough decoy secrets, some will be duplicated"
+                else pure ()
+            
+            -- Create enough decoys (with repeats if needed)
+            let finalDecoys = take requiredDecoys (cycle decoySecrets)
+                
+            -- Create wallets
+            wallets <- createGameWallets outputDir realSecret finalDecoys
+            
+            -- Write wallet data to JSON file
+            createDirectoryIfMissing True outputDir
+            BSL.writeFile outFile (Aeson.encode wallets)
+            
+            putStrLn $ "Created " ++ show (length wallets) ++ " wallets"
+            putStrLn $ "Wallet data written to: " ++ outFile
+
+        _ -> do
+            hPutStrLn stderr "Usage:"
+            hPutStrLn stderr "  compile <output-dir> <secret-phrase>"
+            hPutStrLn stderr "  generate-hash <secret-phrase>"
+            hPutStrLn stderr "  create-game-wallets <output-dir> <real-secret> <output-file>"
+            hPutStrLn stderr "  test-validator <secret-hash> <test-secret>"
+            hPutStrLn stderr "  compile-validators <output-dir>"
+            hPutStrLn stderr "  generate-game <output-dir> <real-secret> <wallet-count> <output-file>" 

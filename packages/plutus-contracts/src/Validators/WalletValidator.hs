@@ -67,15 +67,20 @@ mkWalletValidator expectedSecret UnlockWallet ctx =
     info :: V2.TxInfo
     info = V2.scriptContextTxInfo ctx
     
-    -- Correct implementation: Get the provided secret from the redeemer datum
-    providedSecret :: SecretPhrase
-    providedSecret = case V2.findDatum (V2.txOutDatumHash $ head $ V2.txInfoInputs info) info of
-        Just (V2.Datum d) -> case PlutusTx.fromBuiltinData d of
-            Just s -> s
-            Nothing -> trace "Could not decode datum as SecretPhrase" $ SecretPhrase ""
-        _ -> trace "Could not find datum" $ SecretPhrase ""
+    -- Get the redeemer data, which should contain the secret phrase to check
+    redeemer :: V2.Redeemer
+    redeemer = V2.findOwnInput ctx >>= \input -> 
+                case V2.txInRedeemer input of
+                    Just r -> r
+                    Nothing -> traceError "Redeemer not found"
     
-    -- Check if the provided secret matches the expected hash
+    -- Convert the redeemer to a SecretPhrase
+    providedSecret :: SecretPhrase
+    providedSecret = case PlutusTx.fromBuiltinData (V2.getRedeemer redeemer) of
+        Just s -> s
+        Nothing -> traceError "Could not decode redeemer as SecretPhrase"
+    
+    -- Check if the hash of the provided secret matches the hash of the expected secret
     correctSecret :: Bool
     correctSecret = hashSecretPhrase providedSecret == hashSecretPhrase expectedSecret
 
