@@ -3,9 +3,10 @@
 import { useState, useEffect } from "react"
 import Link from "next/link"
 import { motion } from "framer-motion"
-import { Shield, Code, Database, Zap, ArrowRight } from "lucide-react"
+import { Shield, Code, Database, Zap, ArrowRight, Twitter, Github, MessageSquare } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import Navbar from "@/components/Navbar"
+import Footer from "@/components/Footer"
 import { haskellBenefits, whyHaskellForContracts } from "@/utils/haskellBenefits"
 
 export default function LandingPage() {
@@ -181,25 +182,7 @@ export default function LandingPage() {
         </section>
       </main>
       
-      {/* Footer */}
-      <footer className="border-t border-zinc-800 py-8">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex flex-col md:flex-row justify-between items-center">
-          <p className="text-zinc-500 text-sm">
-            &copy; {new Date().getFullYear()} RugRun ($RGRN). All rights reserved.
-          </p>
-          <div className="flex space-x-6 mt-4 md:mt-0">
-            <a href="#" className="text-zinc-500 hover:text-primary">
-              Twitter
-            </a>
-            <a href="#" className="text-zinc-500 hover:text-primary">
-              Discord
-            </a>
-            <a href="#" className="text-zinc-500 hover:text-primary">
-              GitHub
-            </a>
-          </div>
-        </div>
-      </footer>
+      <Footer />
     </div>
   )
 } 

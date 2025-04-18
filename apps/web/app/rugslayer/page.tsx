@@ -9,6 +9,7 @@ import { Button } from "@/components/ui/button"
 import { GlowCard, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import Navbar from "@/components/Navbar"
 import { truncateAddress } from "@/lib/utils"
+import Footer from "@/components/Footer"
 
 // Sample winner address - in a real app this would come from contract state
 const WINNER_ADDRESS = "addr1qx8z0j76x5ylc6xh3dk4r5m82f8xtslzfs9slnefyg0fjdnvjdz48zg42xk4hmayuuhqynasjvq8h3qcxwxleh6e95rsagfjwx"
@@ -143,6 +144,8 @@ export default function RugSlayerPage() {
           </motion.div>
         </div>
       </main>
+      
+      <Footer />
     </div>
   )
 } 

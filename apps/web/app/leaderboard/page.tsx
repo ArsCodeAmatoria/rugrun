@@ -7,6 +7,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import Navbar from "@/components/Navbar"
 import { leaderboard } from "@/utils/mockWallets"
 import { truncateAddress } from "@/lib/utils"
+import Footer from "@/components/Footer"
 
 export default function LeaderboardPage() {
   const [sortBy, setSortBy] = useState<'attempts' | 'lastAttempt'>('attempts')
@@ -169,6 +170,8 @@ export default function LeaderboardPage() {
           </div>
         </div>
       </main>
+      
+      <Footer />
     </div>
   )
 } 

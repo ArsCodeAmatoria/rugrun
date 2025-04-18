@@ -9,6 +9,7 @@ import Navbar from "@/components/Navbar"
 import WalletCard from "@/components/WalletCard"
 import { wallets, attemptHistory } from "@/utils/mockWallets"
 import { truncateAddress } from "@/lib/utils"
+import Footer from "@/components/Footer"
 
 export default function HuntPage() {
   const [attempts, setAttempts] = useState(attemptHistory)
@@ -154,6 +155,8 @@ export default function HuntPage() {
           </div>
         </div>
       </main>
+      
+      <Footer />
     </div>
   )
 } 
