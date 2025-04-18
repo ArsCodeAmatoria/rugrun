@@ -4,19 +4,20 @@ import React, { useEffect, useState } from 'react'
 import { useApi } from '@/providers/ApiProvider'
 import { motion } from 'framer-motion'
 
-const PointsBalance: React.FC = () => {
+const PointsBalance: React.FC<{ userAddress?: string }> = ({ userAddress }) => {
   const [balance, setBalance] = useState<number | null>(null)
   const [isLoading, setIsLoading] = useState(true)
   const [isRefreshing, setIsRefreshing] = useState(false)
-  const { client, error, clearError } = useApi()
+  const { getUserPoints, error, clearError } = useApi()
 
   const fetchBalance = async () => {
     try {
       setIsRefreshing(true)
       clearError()
-      // Using the axios client from ApiProvider to fetch points from our new endpoint
-      const response = await client.get('/api/user/points')
-      setBalance(response.data?.points || 0)
+      
+      // Use the new getUserPoints method from ApiProvider
+      const points = await getUserPoints(userAddress)
+      setBalance(points)
     } catch (err) {
       console.error('Failed to fetch points:', err)
       // The error is already set by the ApiProvider's interceptors
@@ -28,7 +29,7 @@ const PointsBalance: React.FC = () => {
 
   useEffect(() => {
     fetchBalance()
-  }, [])
+  }, [userAddress])
 
   return (
     <div className="w-full max-w-sm mx-auto p-4">
