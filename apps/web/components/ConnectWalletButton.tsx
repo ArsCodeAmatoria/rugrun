@@ -1,131 +1,135 @@
 'use client';
 
 import React, { useState } from 'react';
+import { motion } from 'framer-motion';
 import { useCardano } from '@/providers/CardanoProvider';
-import { motion, AnimatePresence } from 'framer-motion';
-
-// Supported wallet types
-export enum WalletType {
-  Nami = 'nami',
-  Eternl = 'eternl',
-  Flint = 'flint',
-  Typhon = 'typhon',
-  Yoroi = 'yoroi'
-}
-
-// Dropdown item interface
-interface WalletOption {
-  type: WalletType;
-  name: string;
-  icon: string;
-}
-
-// Available wallets
-const WALLET_OPTIONS: WalletOption[] = [
-  { type: WalletType.Nami, name: 'Nami', icon: '/images/wallets/nami.svg' },
-  { type: WalletType.Eternl, name: 'Eternl', icon: '/images/wallets/eternl.svg' },
-  { type: WalletType.Flint, name: 'Flint', icon: '/images/wallets/flint.svg' },
-  { type: WalletType.Typhon, name: 'Typhon', icon: '/images/wallets/typhon.svg' },
-  { type: WalletType.Yoroi, name: 'Yoroi', icon: '/images/wallets/yoroi.svg' }
-];
 
 const ConnectWalletButton: React.FC = () => {
-  const { isWalletAvailable, connectWallet, connectedWallet, isLoading, error } = useCardano();
-  const [isOpen, setIsOpen] = useState(false);
+  const { 
+    isWalletAvailable, 
+    connectedWallet, 
+    connectWallet, 
+    disconnectWallet, 
+    availableWallets,
+    isLoading 
+  } = useCardano();
+  
+  const [showWalletList, setShowWalletList] = useState(false);
 
-  // Handle wallet connection
-  const handleConnect = async (walletType: WalletType) => {
-    try {
-      await connectWallet(walletType);
-      setIsOpen(false);
-    } catch (error) {
-      console.error('Error connecting wallet:', error);
-    }
+  // Format wallet address for display
+  const formatAddress = (address: string) => {
+    if (!address) return '';
+    return `${address.slice(0, 8)}...${address.slice(-8)}`;
   };
+
+  // Handle wallet selection
+  const handleSelectWallet = async (walletName: string) => {
+    setShowWalletList(false);
+    await connectWallet(walletName);
+  };
+
+  if (!isWalletAvailable) {
+    return (
+      <motion.button
+        whileHover={{ scale: 1.02 }}
+        whileTap={{ scale: 0.98 }}
+        className="bg-gray-800 text-gray-400 px-5 py-2 rounded-lg border border-gray-700 cursor-not-allowed"
+        disabled
+      >
+        No Wallet Available
+      </motion.button>
+    );
+  }
+
+  if (connectedWallet) {
+    return (
+      <div className="flex items-center">
+        <div className="mr-3 flex items-center">
+          <div className="h-2 w-2 rounded-full bg-green-500 mr-2"></div>
+          <span className="text-sm text-gray-400">
+            {formatAddress(connectedWallet.address)}
+          </span>
+        </div>
+        <motion.button
+          whileHover={{ scale: 1.02 }}
+          whileTap={{ scale: 0.98 }}
+          onClick={disconnectWallet}
+          className="bg-red-600/20 hover:bg-red-600/30 border border-red-700/50 text-red-400 px-3 py-1 text-sm rounded-lg"
+        >
+          Disconnect
+        </motion.button>
+      </div>
+    );
+  }
 
   return (
     <div className="relative">
-      {/* Main button */}
       <motion.button
-        whileHover={{ scale: 1.05 }}
-        whileTap={{ scale: 0.95 }}
-        onClick={() => setIsOpen(!isOpen)}
-        disabled={isLoading || !isWalletAvailable}
-        className={`flex items-center px-4 py-2 rounded-lg font-medium transition-colors ${
-          connectedWallet 
-            ? 'bg-gradient-to-r from-green-600 to-green-700 text-white hover:from-green-700 hover:to-green-800' 
-            : 'bg-gradient-to-r from-indigo-600 to-purple-600 text-white hover:from-indigo-700 hover:to-purple-700'
-        } ${(!isWalletAvailable || isLoading) ? 'opacity-60 cursor-not-allowed' : ''}`}
+        whileHover={{ scale: 1.02 }}
+        whileTap={{ scale: 0.98 }}
+        onClick={() => setShowWalletList(!showWalletList)}
+        disabled={isLoading}
+        className={`bg-gradient-to-r from-indigo-600 to-purple-600 text-white px-5 py-2 rounded-lg flex items-center shadow-lg ${
+          isLoading ? 'opacity-70 cursor-not-allowed' : 'hover:from-indigo-500 hover:to-purple-500'
+        }`}
       >
         {isLoading ? (
           <>
-            <svg className="animate-spin -ml-1 mr-2 h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+            <svg className="animate-spin -ml-1 mr-2 h-4 w-4 text-white" fill="none" viewBox="0 0 24 24">
               <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
               <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
             </svg>
             Connecting...
           </>
-        ) : connectedWallet ? (
-          <>
-            <img 
-              src={connectedWallet.icon || '/images/wallets/default.svg'} 
-              alt={connectedWallet.name} 
-              className="w-5 h-5 mr-2" 
-            />
-            {connectedWallet.name}
-          </>
         ) : (
           <>
             <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"></path>
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z" />
             </svg>
             Connect Wallet
           </>
         )}
       </motion.button>
 
-      {/* Dropdown menu */}
-      <AnimatePresence>
-        {isOpen && !connectedWallet && (
-          <motion.div
-            initial={{ opacity: 0, y: -10 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -10 }}
-            className="absolute z-20 right-0 mt-2 w-56 rounded-md shadow-lg bg-gray-900 border border-indigo-500/30"
-          >
-            <div className="py-1 divide-y divide-gray-700">
-              {WALLET_OPTIONS.map((wallet) => (
-                <motion.button
-                  key={wallet.type}
-                  whileHover={{ backgroundColor: 'rgba(79, 70, 229, 0.2)' }}
-                  onClick={() => handleConnect(wallet.type)}
-                  className="flex items-center w-full px-4 py-3 text-left text-white"
+      {showWalletList && (
+        <motion.div
+          initial={{ opacity: 0, y: 10 }}
+          animate={{ opacity: 1, y: 0 }}
+          exit={{ opacity: 0, y: 10 }}
+          className="absolute right-0 mt-2 w-60 bg-gray-800 border border-gray-700 rounded-lg shadow-xl z-10"
+        >
+          <div className="p-2">
+            <div className="text-sm text-gray-400 mb-2 px-3 py-2 border-b border-gray-700">
+              Available Wallets
+            </div>
+            <div className="space-y-1">
+              {availableWallets.map(wallet => (
+                <button
+                  key={wallet.name}
+                  onClick={() => handleSelectWallet(wallet.name)}
+                  className="w-full text-left px-3 py-2 text-sm text-gray-300 hover:bg-gray-700 rounded flex items-center"
                 >
                   <img 
-                    src={wallet.icon} 
+                    src={wallet.icon || '/wallet-icon.svg'} 
                     alt={wallet.name} 
-                    className="w-6 h-6 mr-3" 
+                    className="w-5 h-5 mr-2"
                     onError={(e) => {
-                      (e.target as HTMLImageElement).src = '/images/wallets/default.svg';
+                      (e.target as HTMLImageElement).src = '/wallet-icon.svg';
                     }}
                   />
-                  <span>{wallet.name}</span>
-                </motion.button>
+                  {wallet.name}
+                </button>
               ))}
+              
+              {availableWallets.length === 0 && (
+                <div className="px-3 py-2 text-sm text-gray-500 italic">
+                  No wallets detected
+                </div>
+              )}
             </div>
-            {!isWalletAvailable && (
-              <div className="px-4 py-2 text-xs text-red-400 bg-red-800/30 border-t border-red-900 rounded-b-md">
-                No Cardano wallets detected. Please install a compatible wallet.
-              </div>
-            )}
-            {error && (
-              <div className="px-4 py-2 text-xs text-red-400 bg-red-800/30 border-t border-red-900 rounded-b-md">
-                {error}
-              </div>
-            )}
-          </motion.div>
-        )}
-      </AnimatePresence>
+          </div>
+        </motion.div>
+      )}
     </div>
   );
 };
