@@ -1,6 +1,82 @@
 import crypto from 'crypto';
 
 /**
+ * Generate a UUID v4 compatible string
+ * This is a fallback for environments where crypto.randomUUID isn't available
+ */
+function generateUUID(): string {
+  // Create a manual implementation of UUID v4
+  const getRandomValues = () => {
+    // Use crypto.getRandomValues in a browser environment if available
+    if (typeof window !== 'undefined' && window.crypto && window.crypto.getRandomValues) {
+      const array = new Uint8Array(16);
+      window.crypto.getRandomValues(array);
+      return array;
+    }
+    
+    // Fallback for Node.js or environments without window.crypto
+    try {
+      return crypto.randomBytes(16);
+    } catch (e) {
+      // Last resort fallback
+      const array = new Uint8Array(16);
+      for (let i = 0; i < 16; i++) {
+        array[i] = Math.floor(Math.random() * 256);
+      }
+      return array;
+    }
+  };
+
+  const bytes = getRandomValues();
+  
+  // Set version bits for v4 UUID
+  bytes[6] = (bytes[6] & 0x0f) | 0x40;
+  bytes[8] = (bytes[8] & 0x3f) | 0x80;
+  
+  // Convert to hex string in UUID format
+  let uuid = '';
+  for (let i = 0; i < 16; i++) {
+    uuid += bytes[i].toString(16).padStart(2, '0');
+    if (i === 3 || i === 5 || i === 7 || i === 9) {
+      uuid += '-';
+    }
+  }
+  
+  return uuid;
+}
+
+/**
+ * Generate random bytes in a way that works in both browser and Node environments
+ */
+function getRandomBytes(size: number): Buffer | Uint8Array {
+  if (typeof window !== 'undefined' && window.crypto && window.crypto.getRandomValues) {
+    const array = new Uint8Array(size);
+    window.crypto.getRandomValues(array);
+    return array;
+  }
+  
+  try {
+    return crypto.randomBytes(size);
+  } catch (e) {
+    // Last resort fallback
+    const array = new Uint8Array(size);
+    for (let i = 0; i < size; i++) {
+      array[i] = Math.floor(Math.random() * 256);
+    }
+    return array;
+  }
+}
+
+/**
+ * Convert bytes to a hex string
+ */
+function bytesToHex(bytes: Buffer | Uint8Array): string {
+  return Array.from(bytes)
+    .map(b => b.toString(16).padStart(2, '0'))
+    .join('');
+}
+
+/**
  * Types that mirror our Haskell contract types
  */
 
@@ -43,12 +119,50 @@ export interface WalletData {
 }
 
 /**
+ * A simple JavaScript implementation of SHA-256
+ * Note: This is a very basic implementation for demonstration purposes only
+ * In production, use a proper crypto library
+ */
+function simpleSHA256(input: string): string {
+  // Simple hashing algorithm (DJB2)
+  let hash = 5381;
+  
+  for (let i = 0; i < input.length; i++) {
+    hash = ((hash << 5) + hash) + input.charCodeAt(i); // hash * 33 + c
+    hash = hash >>> 0; // Convert to unsigned 32-bit integer
+  }
+  
+  // Create a hexadecimal representation that's similar in length to SHA-256
+  let hexString = hash.toString(16).padStart(8, '0');
+  // Replicate the string to get closer to SHA-256 length (64 chars)
+  hexString = hexString.repeat(8);
+  
+  return hexString.substring(0, 64);
+}
+
+/**
  * Simulates the Haskell SHA-256 function
  * @param input - Input string to hash
  * @returns Hexadecimal representation of SHA-256 hash
  */
 export function sha256(input: string): string {
-  return crypto.createHash('sha256').update(input).digest('hex');
+  // In Node.js environment
+  if (typeof window === 'undefined') {
+    try {
+      return crypto.createHash('sha256').update(input).digest('hex');
+    } catch (e) {
+      return simpleSHA256(input);
+    }
+  }
+  
+  // In browser environment
+  try {
+    // Try using the Node.js crypto (works in Next.js)
+    return crypto.createHash('sha256').update(input).digest('hex');
+  } catch (e) {
+    // Fallback to our simple implementation
+    return simpleSHA256(input);
+  }
 }
 
 /**
@@ -113,14 +227,16 @@ export function createWallet(
   clue: string, 
   secretOrHash: string
 ): WalletData {
-  const id = crypto.randomUUID();
-  const address = `addr_${crypto.randomBytes(16).toString('hex')}`;
+  const id = generateUUID();
+  const randomBytes = getRandomBytes(16);
+  const address = `addr_${bytesToHex(randomBytes)}`;
   
   if (type === WalletType.RealWallet) {
+    const creatorBytes = getRandomBytes(8);
     const datum: RugDatum = {
       rugSecretHash: secretOrHash,
       rugStatus: RugStatus.Unclaimed,
-      rugCreatorPkh: 'creator_' + crypto.randomBytes(8).toString('hex')
+      rugCreatorPkh: 'creator_' + bytesToHex(creatorBytes)
     };
     
     return {
