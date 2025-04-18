@@ -33,7 +33,10 @@ export default function LandingPage() {
             className="text-center space-y-8"
           >
             <h1 className="text-4xl sm:text-5xl md:text-6xl font-extrabold font-orbitron tracking-tight">
-              <span className="block">🏃 RugRun</span>
+              <span className="block flex items-center justify-center gap-2">
+                <Zap className="h-12 w-12 text-primary" />
+                RugRun
+              </span>
               <span className="block mt-2 text-transparent bg-clip-text bg-gradient-to-r from-primary via-pink-500 to-white">
                 Catch the Dev. Win the Pool.
               </span>

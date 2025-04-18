@@ -4,7 +4,7 @@ import { useEffect } from "react"
 import Link from "next/link"
 import { motion } from "framer-motion"
 import confetti from "canvas-confetti"
-import { Trophy, Share2, ArrowLeft } from "lucide-react"
+import { Trophy, Share2, ArrowLeft, Zap } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { GlowCard, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import Navbar from "@/components/Navbar"
@@ -132,7 +132,9 @@ export default function RugSlayerPage() {
               <h3 className="text-xl font-orbitron mb-4">NFT Badge Awarded</h3>
               <div className="border border-zinc-800 rounded-xl p-6 bg-black/30 inline-block shadow-[0_0_15px_#ff007f]">
                 <div className="aspect-square w-40 md:w-60 bg-gradient-to-br from-primary/30 via-black to-purple-900/30 rounded-lg border border-primary/50 flex flex-col items-center justify-center p-4">
-                  <div className="text-5xl mb-4">🏃‍♂️</div>
+                  <div className="mb-4 text-primary">
+                    <Zap className="h-16 w-16" />
+                  </div>
                   <div className="text-lg font-orbitron text-center">Rug Slayer</div>
                   <div className="text-xs text-zinc-400 mt-2">Special Edition NFT</div>
                 </div>

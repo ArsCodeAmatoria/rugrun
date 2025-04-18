@@ -4,6 +4,7 @@ import { useState } from "react"
 import Link from "next/link"
 import { usePathname } from "next/navigation"
 import { motion } from "framer-motion"
+import { Zap } from "lucide-react"
 import { cn } from "@/lib/utils"
 
 const navigation = [
@@ -23,7 +24,7 @@ export default function Navbar() {
         <div className="flex items-center justify-between h-16">
           <div className="flex-shrink-0">
             <Link href="/" className="font-orbitron text-xl text-white font-bold flex items-center gap-2">
-              <span role="img" aria-label="RugRun" className="text-2xl">🏃</span>
+              <Zap className="h-6 w-6 text-primary" />
               <span className="text-transparent bg-clip-text bg-gradient-to-r from-primary to-white">RugRun</span>
             </Link>
           </div>
