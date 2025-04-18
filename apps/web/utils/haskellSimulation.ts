@@ -172,7 +172,8 @@ export function sha256(input: string): string {
  * @returns Boolean indicating if the provided secret hashes to the expected hash
  */
 export function verifySecret(secretHash: string, providedSecret: string): boolean {
-  return sha256(providedSecret) === secretHash;
+  const providedSecretHash = sha256(providedSecret);
+  return providedSecretHash === secretHash;
 }
 
 /**
@@ -187,8 +188,9 @@ export function validateRugWallet(datum: RugDatum, redeemer: RugRedeemer): { suc
     return { success: false, message: "Wallet already claimed" };
   }
   
-  // Verify if the hash matches
-  if (!verifySecret(datum.rugSecretHash, redeemer.secretPhrase)) {
+  // Verify if the hash of the provided secret matches the stored hash
+  const providedSecretHash = sha256(redeemer.secretPhrase);
+  if (providedSecretHash !== datum.rugSecretHash) {
     return { success: false, message: "Invalid secret phrase" };
   }
   
@@ -292,7 +294,10 @@ export function attemptUnlock(wallet: WalletData, secretPhrase: string): { succe
 export function generateGameWallets(count: number, totalBalance: number, secret: string): WalletData[] {
   const wallets: WalletData[] = [];
   const realWalletIndex = Math.floor(Math.random() * count);
+  
+  // Hash the secret for the real wallet
   const secretHash = sha256(secret);
+  console.log(`Secret: "${secret}", Hash: "${secretHash}"`);
   
   // Create clues that hint but don't reveal too much
   const clues = [
@@ -314,7 +319,7 @@ export function generateGameWallets(count: number, totalBalance: number, secret:
       const realWallet = createWallet(
         WalletType.RealWallet,
         realWalletBalance,
-        "This wallet seems different. The clue might be meaningful: 'Haskell rocks!'",
+        "This wallet is the real one! Hint: The secret is the default language of the RugRun contract followed by three lowercase letters (hint: 'ftw').",
         secretHash
       );
       wallets.push(realWallet);

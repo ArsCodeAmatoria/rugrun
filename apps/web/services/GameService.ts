@@ -3,7 +3,8 @@ import {
   generateGameWallets, 
   attemptUnlock, 
   RugStatus,
-  WalletType 
+  WalletType,
+  verifySecret
 } from '@/utils/haskellSimulation';
 
 // Local storage keys for persisting game state
@@ -161,6 +162,30 @@ export class GameService {
       totalAttempts: this.userAttempts.length,
       successfulAttempts: this.userAttempts.filter(a => a.success).length
     };
+  }
+
+  /**
+   * Debug method: Check if a given secret matches the real wallet's secret
+   * @param secretToCheck - Secret to check against the real wallet
+   * @returns Whether the secret is correct
+   */
+  public checkSecretCorrectness(secretToCheck: string): boolean {
+    const realWallet = this.wallets.find(w => w.type === WalletType.RealWallet);
+    if (!realWallet) {
+      return false;
+    }
+    
+    const rugDatum = realWallet.datum as any;
+    return verifySecret(rugDatum.rugSecretHash, secretToCheck);
+  }
+
+  /**
+   * Get the real wallet's address for debugging
+   * @returns The address of the real wallet
+   */
+  public getRealWalletAddress(): string | null {
+    const realWallet = this.wallets.find(w => w.type === WalletType.RealWallet);
+    return realWallet ? realWallet.address : null;
   }
 
   /**

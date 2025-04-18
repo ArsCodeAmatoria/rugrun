@@ -7,7 +7,9 @@ import WalletItem from '@/components/WalletItem'
 
 const GamePage: React.FC = () => {
   const [showInstructions, setShowInstructions] = useState(false);
-  const { wallets, userAttempts, refreshGameState, resetGame } = useGame()
+  const [showDevMode, setShowDevMode] = useState(false);
+  const [secretToTest, setSecretToTest] = useState('');
+  const { wallets, userAttempts, refreshGameState, resetGame, checkSecretCorrectness, getRealWalletAddress } = useGame()
   const [isResetting, setIsResetting] = useState(false)
   
   // Animation variants for staggered children
@@ -50,6 +52,15 @@ const GamePage: React.FC = () => {
   const successRate = totalAttempts > 0 
     ? ((unlockedWallets / totalAttempts) * 100).toFixed(1) 
     : '0'
+
+  const toggleDevMode = () => {
+    setShowDevMode(!showDevMode);
+  };
+
+  const testSecret = () => {
+    const isCorrect = checkSecretCorrectness(secretToTest);
+    alert(isCorrect ? "✅ Secret is correct!" : "❌ Secret is incorrect!");
+  };
 
   return (
     <motion.div 
@@ -215,9 +226,62 @@ const GamePage: React.FC = () => {
         </motion.div>
       </div>
 
+      <AnimatePresence>
+        {showDevMode && (
+          <motion.div 
+            initial={{ opacity: 0, scale: 0.9 }}
+            animate={{ opacity: 1, scale: 1 }}
+            exit={{ opacity: 0, scale: 0.9 }}
+            transition={{ delay: 0.1 }}
+            className="bg-gradient-to-r from-red-900/30 to-orange-900/30 backdrop-blur-md p-5 rounded-lg shadow-md border border-red-500/30 mt-8"
+          >
+            <h3 className="text-xl font-semibold text-white mb-3 flex items-center">
+              <svg className="w-5 h-5 mr-2 text-red-400" fill="currentColor" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg">
+                <path fillRule="evenodd" d="M11.3 1.046A1 1 0 0112 2v5h4a1 1 0 01.82 1.573l-7 10A1 1 0 018 18v-5H4a1 1 0 01-.82-1.573l7-10a1 1 0 011.12-.38z" clipRule="evenodd"></path>
+              </svg>
+              Developer Mode
+            </h3>
+            <div className="space-y-3">
+              <div className="bg-black/30 p-3 rounded-lg border border-red-500/20">
+                <p className="text-sm text-red-300">Real Wallet Address</p>
+                <p className="text-lg font-mono text-red-200 break-all">{getRealWalletAddress()}</p>
+              </div>
+              <div className="bg-black/30 p-3 rounded-lg border border-red-500/20">
+                <p className="text-sm text-red-300 mb-2">Test Secret Phrase</p>
+                <div className="flex gap-2">
+                  <input 
+                    type="text" 
+                    value={secretToTest}
+                    onChange={(e) => setSecretToTest(e.target.value)}
+                    placeholder="Enter a secret to test"
+                    className="flex-grow px-3 py-2 bg-black/40 text-white rounded-md border border-red-500/20 focus:outline-none focus:border-red-500/60"
+                  />
+                  <button
+                    onClick={testSecret}
+                    className="px-4 py-2 bg-red-600 text-white rounded hover:bg-red-700 transition-colors text-sm font-medium"
+                  >
+                    Test
+                  </button>
+                </div>
+              </div>
+              <div className="bg-black/30 p-3 rounded-lg border border-red-500/20">
+                <p className="text-sm text-red-300">Default Secret</p>
+                <p className="text-lg font-mono text-red-200">haskellftw</p>
+              </div>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
       <div className="flex justify-between items-center mb-6 mt-8">
         <h2 className="text-2xl font-bold text-white">Challenge Wallets</h2>
         <div className="flex space-x-3">
+          <button
+            onClick={toggleDevMode}
+            className="px-4 py-2 bg-orange-600 text-white rounded hover:bg-orange-700 transition-colors text-sm font-medium"
+          >
+            {showDevMode ? 'Hide Dev Mode' : 'Dev Mode'}
+          </button>
           <button
             onClick={refreshGameState}
             className="px-4 py-2 bg-indigo-600 text-white rounded hover:bg-indigo-700 transition-colors text-sm font-medium"

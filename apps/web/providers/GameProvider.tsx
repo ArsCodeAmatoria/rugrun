@@ -18,6 +18,9 @@ interface GameContextType {
   attemptUnlock: (walletAddress: string, secretPhrase: string) => Promise<AttemptRecord>;
   resetGame: (walletCount?: number, totalBalance?: number, secret?: string) => void;
   refreshGameState: () => void;
+  // Debug methods
+  checkSecretCorrectness: (secretToCheck: string) => boolean;
+  getRealWalletAddress: () => string | null;
 }
 
 // Create the context with a default value
@@ -86,7 +89,10 @@ export const GameProvider: React.FC<GameProviderProps> = ({ children }) => {
     isLoading,
     attemptUnlock,
     resetGame,
-    refreshGameState
+    refreshGameState,
+    // Add debug methods
+    checkSecretCorrectness: (secretToCheck: string) => gameService.checkSecretCorrectness(secretToCheck),
+    getRealWalletAddress: () => gameService.getRealWalletAddress()
   }
 
   // Return the provider with the context value
