@@ -1,0 +1,77 @@
+-- Plutus dependencies for RugRun project
+-- Adjust the index-state and tag versions based on the Plutus version you are targeting
+
+index-state: 2023-05-01T00:00:00Z
+
+packages: ./.
+
+-- Plutus dependencies from IOG repositories
+repository cardano-haskell-packages
+  url: https://input-output-hk.github.io/cardano-haskell-packages
+  secure: True
+  root-keys:
+    3e0cce471cf09815f930210f7827afeee29f1b2d6990644fb570bb2ae6caba73
+    443abb7fb497a134c343faf52f0b659bd7999bc06b7f63fa76dc99d631f9bea1
+    a86a1f6ce86c449c46666bda44268677abf29b5b2d2eb5ec7af903ec2f117a82
+    bcec67e8e99cabfa7764d75ad9b158d72bfacf70ca1d0ec8bc6b4406d1bf8413
+    c00aae8461a256275598500ea0e187588c35a5d5d7454fb57eac18d9edb86a56
+    d4a35cd3121aa00d18544bb0ac01c3e1691d618f462c46129271bccf39f7e8ee
+
+-- IOG package source repositories
+source-repository-package
+  type: git
+  location: https://github.com/input-output-hk/plutus-apps
+  tag: v2023-05-01
+  subdir:
+    freer-extras
+    plutus-contract
+    plutus-chain-index-core
+    plutus-ledger
+    plutus-script-utils
+    plutus-tx-constraints
+
+source-repository-package
+  type: git
+  location: https://github.com/input-output-hk/plutus
+  tag: v2023-05-01
+  subdir:
+    plutus-core
+    plutus-ledger-api
+    plutus-tx
+    plutus-tx-plugin
+    prettyprinter-configurable
+    word-array
+
+-- Common build settings
+package plutus-core
+  tests: False
+
+package plutus-ledger-api
+  tests: False
+
+package plutus-tx
+  tests: False
+
+package plutus-tx-plugin
+  tests: False
+
+-- Enable profiling if needed
+-- profiling: True
+-- profiling-detail: all-functions
+
+-- Optimization flags
+optimization: 2
+
+allow-newer:
+  *:aeson,
+  *:base,
+  *:time,
+  *:template-haskell,
+  *:ghc-prim
+
+constraints:
+  aeson >= 2.0.0.0
+
+-- Tests are disabled by default to speed up build time
+-- Set this to True if you want to run tests
+tests: False 
