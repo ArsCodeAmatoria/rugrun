@@ -1,0 +1,47 @@
+cabal-version:      3.0
+name:               rugrun
+version:            0.1.0.0
+license:            MIT
+author:             RugRun Team
+maintainer:         team@rugrun.io
+build-type:         Simple
+
+common lang
+  default-language:   Haskell2010
+  ghc-options:
+    -Wall -Wnoncanonical-monad-instances -Wincomplete-uni-patterns
+    -Wincomplete-record-updates -Wredundant-constraints -Widentities
+    -fobject-code -fno-ignore-interface-pragmas -fno-omit-interface-pragmas
+
+library
+  import:             lang
+  exposed-modules:    RugRun.Contract
+                    , RugRun.Types
+                    , RugRun.Utils
+  build-depends:      base >= 4.9 && < 5
+                    , aeson
+                    , bytestring
+                    , containers
+                    , plutus-core
+                    , plutus-ledger-api
+                    , plutus-tx
+                    , plutus-tx-plugin
+                    , text
+  hs-source-dirs:     src
+
+executable rugrun
+  import:             lang
+  main-is:            Main.hs
+  build-depends:      base >= 4.9 && < 5
+                    , rugrun
+  hs-source-dirs:     app
+
+test-suite rugrun-test
+  import:             lang
+  type:               exitcode-stdio-1.0
+  main-is:            Main.hs
+  build-depends:      base >= 4.9 && < 5
+                    , rugrun
+                    , tasty
+                    , tasty-hunit
+  hs-source-dirs:     test 
