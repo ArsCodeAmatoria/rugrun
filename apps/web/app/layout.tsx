@@ -2,6 +2,9 @@ import './globals.css'
 import type { Metadata } from 'next'
 import { Inter } from 'next/font/google'
 import StarfieldBackground from '@/components/StarfieldBackground'
+import ParticleBackground from '@/components/ParticleBackground'
+import { Suspense } from 'react'
+import PageTransition from '@/components/PageTransition'
 
 const inter = Inter({ subsets: ['latin'] })
 
@@ -18,8 +21,18 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body className={inter.className}>
+        {/* Primary background */}
         <StarfieldBackground />
-        {children}
+        
+        {/* Overlay with particle effects */}
+        <Suspense fallback={null}>
+          <ParticleBackground />
+        </Suspense>
+        
+        {/* Main content with page transitions */}
+        <PageTransition>
+          {children}
+        </PageTransition>
       </body>
     </html>
   )
