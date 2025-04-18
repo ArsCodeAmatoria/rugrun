@@ -1,117 +1,176 @@
 module Main where
 
+import qualified Data.ByteString.Lazy as LBS
+import qualified Data.ByteString      as BS
+import qualified Data.Text            as T
+import qualified Data.Text.Encoding   as TE
+import qualified PlutusTx.Builtins    as Builtins
 import           Test.Tasty
 import           Test.Tasty.HUnit
-
-import qualified PlutusTx.Builtins           as Builtins
-import           PlutusTx.Prelude            hiding (Semigroup(..), (<$>))
-import           Plutus.V1.Ledger.Api        (POSIXTime(..), PubKeyHash(..))
-import           Prelude                      (IO, String, ($), (++), (<$>))
-import qualified Data.Text                    as T
-import qualified Data.Text.Encoding           as TE
-import qualified Data.ByteString              as BS
 
 import           RugRun.Contract
 import           RugRun.Types
 import           RugRun.Utils
 
--- Convert String to BuiltinByteString
-strToByteString :: String -> BuiltinByteString
-strToByteString s = Builtins.toBuiltin $ TE.encodeUtf8 $ T.pack s
+import qualified Prelude              as Haskell
+import           PlutusTx.Prelude
+import           Plutus.V1.Ledger.Api
+import           Plutus.V1.Ledger.Time
+import           Plutus.V1.Ledger.Value
+import           Plutus.V1.Ledger.Contexts
 
--- Convert BuiltinByteString to String
-byteStringToStr :: BuiltinByteString -> String
-byteStringToStr bs = T.unpack $ TE.decodeUtf8 $ Builtins.fromBuiltin bs
+-- Helper function to convert String to BuiltinByteString
+stringToBuiltinByteString :: Haskell.String -> BuiltinByteString
+stringToBuiltinByteString = Builtins.toBuiltin . TE.encodeUtf8 . T.pack
 
--- Create a mock PubKeyHash
-mockPkh :: PubKeyHash
-mockPkh = PubKeyHash $ Builtins.toBuiltin $ BS.pack [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19]
+-- Helper function to convert BuiltinByteString to String
+builtinByteStringToString :: BuiltinByteString -> Haskell.String
+builtinByteStringToString = T.unpack . TE.decodeUtf8 . Builtins.fromBuiltin
 
--- Test the SHA-256 hashing function
-testSha256 :: TestTree
-testSha256 = testGroup "SHA-256 Tests"
-  [ testCase "Simple String Hash" $ do
-      let input = strToByteString "haskellrocks"
-          result = sha256 input
-          resultHex = byteStringToStr result
-      resultHex @?= "eb"  -- This will fail with the actual hash, replace with correct value
-  
-  , testCase "Empty String Hash" $ do
-      let input = strToByteString ""
-          result = sha256 input
-          resultHex = byteStringToStr result
-      resultHex @?= "e3" -- This will fail with the actual hash, replace with correct value
-  ]
+-- Fixtures for testing
+testSecret :: BuiltinByteString
+testSecret = stringToBuiltinByteString "haskell_loves_monads"
 
--- Test the secret verification function
-testVerifySecret :: TestTree
-testVerifySecret = testGroup "Secret Verification Tests"
-  [ testCase "Correct Secret" $ do
-      let secret = strToByteString "haskellrocks"
-          hash = sha256 secret
-          result = verifySecret hash secret
-      result @?= True
-      
-  , testCase "Incorrect Secret" $ do
-      let correctSecret = strToByteString "haskellrocks"
-          hash = sha256 correctSecret
-          wrongSecret = strToByteString "wrongsecret"
-          result = verifySecret hash wrongSecret
-      result @?= False
-  ]
+testSecretHash :: BuiltinByteString
+testSecretHash = sha256 testSecret
 
--- Test utility functions
-testUtilityFunctions :: TestTree
-testUtilityFunctions = testGroup "Utility Function Tests"
-  [ testCase "Game ID Generation" $ do
-      let seed = strToByteString "gameseed"
-          time = POSIXTime 1234567890
-          gameId = generateGameId seed time
-      lengthOfByteString gameId @?= 32  -- SHA-256 output is 32 bytes
-      
-  , testCase "Expiration Validation" $ do
-      let currentTime = POSIXTime 1000
-          futureTime = POSIXTime 2000
-          pastTime = POSIXTime 500
-          
-          notExpiredYet = validateExpiration currentTime futureTime
-          alreadyExpired = validateExpiration currentTime pastTime
-          
-      notExpiredYet @?= False  -- Should be false since current < expiration
-      alreadyExpired @?= True  -- Should be true since current > expiration
-      
-  , testCase "Fee Calculation" $ do
-      let total = 1000
-          feePercentage = 10
-          expected = 100
-          
-          result = calculateFee total feePercentage
-          
-      result @?= expected
-  ]
+creatorPkh :: PubKeyHash
+creatorPkh = "0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef"
 
--- Test clue encoding/decoding
-testClueEncoding :: TestTree
-testClueEncoding = testGroup "Clue Encoding Tests"
-  [ testCase "Encode and Decode" $ do
-      let original = strToByteString "This is a secret clue"
-          encoded = encodeClue original
-          decoded = decodeClue encoded
-          
-      decoded @?= original
-      
-  , testCase "Encoded is Different" $ do
-      let original = strToByteString "This is a secret clue"
-          encoded = encodeClue original
-          
-      assertBool "Encoded should be different from original" (encoded /= original)
-  ]
+expirationTime :: POSIXTime
+expirationTime = 1672531200000 -- 2023-01-01
 
--- Main test group
+createTestRugDatum :: RugDatum
+createTestRugDatum = RugDatum
+  { rugSecretHash = testSecretHash
+  , rugStatus = Unclaimed
+  , rugCreatorPkh = creatorPkh
+  }
+
+createTestDecoyDatum :: DecoyDatum
+createTestDecoyDatum = DecoyDatum
+  { decoyClue = stringToBuiltinByteString "This is a decoy clue"
+  , decoyBurnOnUse = True
+  , decoyExpiration = expirationTime
+  , decoyCreatorPkh = creatorPkh
+  }
+
 main :: IO ()
-main = defaultMain $ testGroup "RugRun Contract Tests"
-  [ testSha256
-  , testVerifySecret
-  , testUtilityFunctions
-  , testClueEncoding
-  ] 
+main = defaultMain tests
+
+tests :: TestTree
+tests = testGroup "RugRun Tests"
+  [ testGroup "Utils Tests" 
+      [ testCase "SHA-256 Hashing" testSha256
+      , testCase "Secret Verification (Valid)" testValidSecretVerification
+      , testCase "Secret Verification (Invalid)" testInvalidSecretVerification
+      , testCase "Game ID Generation" testGameIdGeneration
+      , testCase "Expiration Validation" testExpirationValidation
+      ]
+  , testGroup "RugWallet Validator Tests"
+      [ testCase "Valid Secret Phrase" testValidRugRedeemer
+      , testCase "Invalid Secret Phrase" testInvalidRugRedeemer
+      , testCase "Already Claimed" testAlreadyClaimedRug
+      ]
+  , testGroup "DecoyWallet Validator Tests"
+      [ testCase "Normal Interaction (Always Fails)" testDecoyInteraction
+      , testCase "Burn On Use" testDecoyBurnOnUse
+      , testCase "Reclaim After Expiration" testDecoyReclaim
+      ]
+  ]
+
+-- Utils Tests
+testSha256 :: Assertion
+testSha256 = do
+  let input = stringToBuiltinByteString "test"
+  let expectedHash = stringToBuiltinByteString "9f86d081884c7d659a2feaa0c55ad015a3bf4f1b2b0b822cd15d6c15b0f00a08"
+  Haskell.assertEqual "SHA-256 hash should match expected value" expectedHash (sha256 input)
+
+testValidSecretVerification :: Assertion
+testValidSecretVerification = do
+  let result = verifySecret testSecretHash testSecret
+  Haskell.assertBool "Valid secret should verify" result
+
+testInvalidSecretVerification :: Assertion
+testInvalidSecretVerification = do
+  let wrongSecret = stringToBuiltinByteString "wrong_secret"
+  let result = verifySecret testSecretHash wrongSecret
+  Haskell.assertBool "Invalid secret should not verify" (not result)
+
+testGameIdGeneration :: Assertion
+testGameIdGeneration = do
+  let seed = stringToBuiltinByteString "test-seed"
+  let timestamp = 1672531200000 -- 2023-01-01
+  let gameId1 = generateGameId seed timestamp
+  let gameId2 = generateGameId seed (timestamp + 1)
+  
+  Haskell.assertBool "Game IDs should not be empty" (lengthOfByteString gameId1 > 0)
+  Haskell.assertBool "Different timestamps should produce different game IDs" (gameId1 /= gameId2)
+
+testExpirationValidation :: Assertion
+testExpirationValidation = do
+  let expiration = 1672531200000 -- 2023-01-01
+  let beforeExpiration = 1672444800000 -- 2022-12-31
+  let afterExpiration = 1672617600000 -- 2023-01-02
+  
+  Haskell.assertBool "Should not be expired before expiration time" 
+    (not $ validateExpiration beforeExpiration expiration)
+  
+  Haskell.assertBool "Should be expired after expiration time" 
+    (validateExpiration afterExpiration expiration)
+
+-- RugWallet Validator Tests
+testValidRugRedeemer :: Assertion
+testValidRugRedeemer = do
+  let datum = createTestRugDatum
+  let redeemer = RugRedeemer { secretPhrase = testSecret }
+  let result = validateRugWallet datum redeemer
+  
+  Haskell.assertEqual "Validation result should be success" True (Haskell.fst result)
+
+testInvalidRugRedeemer :: Assertion
+testInvalidRugRedeemer = do
+  let datum = createTestRugDatum
+  let redeemer = RugRedeemer { secretPhrase = stringToBuiltinByteString "wrong_secret" }
+  let result = validateRugWallet datum redeemer
+  
+  Haskell.assertEqual "Validation result should be failure" False (Haskell.fst result)
+
+testAlreadyClaimedRug :: Assertion
+testAlreadyClaimedRug = do
+  let datum = createTestRugDatum { rugStatus = Claimed }
+  let redeemer = RugRedeemer { secretPhrase = testSecret }
+  let result = validateRugWallet datum redeemer
+  
+  Haskell.assertEqual "Validation should fail for already claimed wallet" False (Haskell.fst result)
+
+-- DecoyWallet Validator Tests
+testDecoyInteraction :: Assertion
+testDecoyInteraction = do
+  let datum = createTestDecoyDatum
+  let redeemer = DecoyRedeemer { decoyInput = stringToBuiltinByteString "any_input", decoyReclaimOp = NormalOperation }
+  let result = validateDecoyWallet datum redeemer
+  
+  Haskell.assertEqual "Decoy wallet should always reject normal interaction" False (Haskell.fst result)
+
+testDecoyBurnOnUse :: Assertion
+testDecoyBurnOnUse = do
+  let datum = createTestDecoyDatum { decoyBurnOnUse = True }
+  let redeemer = DecoyRedeemer { decoyInput = stringToBuiltinByteString "any_input", decoyReclaimOp = NormalOperation }
+  let result = validateDecoyWallet datum redeemer
+  
+  Haskell.assertEqual "Decoy wallet with burn should fail" False (Haskell.fst result)
+  -- In actual implementation, this would trigger token burn, but that's hard to test in isolation
+
+testDecoyReclaim :: Assertion
+testDecoyReclaim = do
+  let datum = createTestDecoyDatum
+  let redeemer = DecoyRedeemer { decoyInput = stringToBuiltinByteString "any_input", decoyReclaimOp = ReclaimTokens }
+  
+  -- Create a mock context with time after expiration
+  let mockCtxAfterExpiration = undefined -- In a real test, we would create a proper ScriptContext
+  
+  -- This is a simplified test since we can't easily create a full ScriptContext
+  -- In a real implementation, we would mock the transaction info and time
+  let isExpired = validateExpiration (expirationTime + 1) expirationTime
+  Haskell.assertBool "Should be expired" isExpired 

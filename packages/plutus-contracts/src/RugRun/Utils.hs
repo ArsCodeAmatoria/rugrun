@@ -11,13 +11,19 @@ module RugRun.Utils
   , encodeClue
   , decodeClue
   , calculateFee
+  , toHexString
+  , fromHexString
+  , isValidWalletAddress
+  , calculateReward
+  , validateTimeRange
   ) where
 
 import           PlutusTx.Prelude
 import qualified Prelude                     as Haskell
-import           Plutus.V1.Ledger.Api        (BuiltinByteString, POSIXTime, Value, AssetClass, assetClassValueOf)
+import           Plutus.V1.Ledger.Api        (BuiltinByteString, POSIXTime, Value, AssetClass, assetClassValueOf, LowerBound, UpperBound, Interval(..))
 import qualified PlutusTx.Builtins           as Builtins
-import           Plutus.V1.Ledger.Interval   (contains, from)
+import           Plutus.V1.Ledger.Interval   (contains, from, to, strictUpperBound, strictLowerBound, Closure)
+import           Plutus.V1.Ledger.Contexts   (ScriptContext, TxInfo, scriptContextTxInfo, valuePaidTo, findOwnInput, findDatum, txSignedBy, txInfoValidRange)
 
 -- | Compute SHA-256 hash of input
 sha256 :: BuiltinByteString -> BuiltinByteString
@@ -51,39 +57,140 @@ getWalletBalance = assetClassValueOf
 
 -- | Calculate fee amount based on total value and percentage
 calculateFee :: Integer -> Integer -> Integer
-calculateFee totalAmount feePercentage =
-  divide (totalAmount * feePercentage) 100
+calculateFee totalValue feePercentage = 
+  (totalValue * feePercentage) `divide` 100
 
--- | Encode a clue string with simple substitution (for adding obfuscation)
+-- | Encode a clue to make it slightly obfuscated
+-- This is a simple XOR with a fixed key for demonstration
 encodeClue :: BuiltinByteString -> BuiltinByteString
 encodeClue clue =
-  let
-    encoder :: Integer -> Integer
-    encoder c = (c + 7) `modulo` 256
-  in
-    mapByteString encoder clue
-
--- | Decode an encoded clue string
-decodeClue :: BuiltinByteString -> BuiltinByteString
-decodeClue encodedClue =
-  let
-    decoder :: Integer -> Integer
-    decoder c = (c + 249) `modulo` 256  -- (c - 7) mod 256, but we use +249 to avoid negative
-  in
-    mapByteString decoder encodedClue
-
--- | Helper to map a function over each byte in a ByteString
-mapByteString :: (Integer -> Integer) -> BuiltinByteString -> BuiltinByteString
-mapByteString f bs =
-  let
-    len = lengthOfByteString bs
+  let 
+    key = stringToBuiltinByteString "RUGRUN"
+    keyLength = lengthOfByteString key
     
-    go :: Integer -> BuiltinByteString -> BuiltinByteString
-    go i acc
-      | i >= len = acc
+    applyXor :: Integer -> BuiltinByteString -> BuiltinByteString
+    applyXor i bs
+      | i >= lengthOfByteString clue = bs
       | otherwise =
-          let byte = indexByteString bs i
-              newByte = f byte
-          in go (i + 1) (consByteString newByte acc)
+          let 
+            keyIndex = i `modulo` keyLength
+            keyByte = indexByteString key keyIndex
+            clueByte = indexByteString clue i
+            resultByte = keyByte `xor` clueByte
+          in
+            applyXor (i + 1) (consByteString resultByte bs)
   in
-    go 0 emptyByteString 
+    applyXor 0 emptyByteString
+
+-- | Decode an encoded clue
+decodeClue :: BuiltinByteString -> BuiltinByteString
+decodeClue = encodeClue  -- XOR is symmetric, so encoding again will decode it
+
+-- | Convert a ByteString to a hexadecimal representation
+toHexString :: BuiltinByteString -> BuiltinByteString
+toHexString bs =
+  let
+    -- Convert a single byte to two hex characters
+    byteToHex :: Integer -> BuiltinByteString
+    byteToHex b = 
+      let
+        highNibble = b `divide` 16
+        lowNibble = b `modulo` 16
+        toHexChar n
+          | n < 10 = n + 48  -- '0'-'9' (ASCII 48-57)
+          | otherwise = n + 87  -- 'a'-'f' (ASCII 97-102)
+      in
+        consByteString (toHexChar highNibble) (consByteString (toHexChar lowNibble) emptyByteString)
+        
+    -- Process each byte in the input
+    processBytes :: Integer -> BuiltinByteString -> BuiltinByteString
+    processBytes i acc
+      | i >= lengthOfByteString bs = acc
+      | otherwise = 
+          let 
+            byte = indexByteString bs i
+            hexChars = byteToHex byte
+          in
+            processBytes (i + 1) (appendByteString acc hexChars)
+  in
+    processBytes 0 emptyByteString
+
+-- | Convert a hex string back to bytes (partial implementation)
+fromHexString :: BuiltinByteString -> BuiltinByteString
+fromHexString hexStr =
+  let
+    -- Convert two hex characters to a single byte
+    hexToByte :: Integer -> Integer -> Integer
+    hexToByte high low =
+      let
+        fromHexChar c
+          | c >= 48 && c <= 57 = c - 48  -- '0'-'9'
+          | c >= 97 && c <= 102 = c - 87  -- 'a'-'f'
+          | c >= 65 && c <= 70 = c - 55   -- 'A'-'F'
+          | otherwise = 0
+      in
+        (fromHexChar high * 16) + fromHexChar low
+        
+    -- Process hex string two characters at a time
+    processHex :: Integer -> BuiltinByteString -> BuiltinByteString
+    processHex i acc
+      | i >= lengthOfByteString hexStr - 1 = acc
+      | otherwise = 
+          let 
+            highChar = indexByteString hexStr i
+            lowChar = indexByteString hexStr (i + 1)
+            byte = hexToByte highChar lowChar
+          in
+            processHex (i + 2) (consByteString byte acc)
+  in
+    processHex 0 emptyByteString
+
+-- | Simple wallet address validation (prefix check)
+isValidWalletAddress :: BuiltinByteString -> Bool
+isValidWalletAddress addr =
+  let
+    -- Check if address starts with a valid prefix (simplified example)
+    -- In a real implementation, this would do proper validation based on address format
+    validPrefixes = [stringToBuiltinByteString "addr1", stringToBuiltinByteString "addr_test1"]
+    
+    hasPrefix prefix =
+      let
+        prefixLen = lengthOfByteString prefix
+        addrPrefix = sliceByteString 0 prefixLen addr
+      in
+        addrPrefix == prefix
+        
+    checkPrefixes [] = False
+    checkPrefixes (p:ps) = if hasPrefix p then True else checkPrefixes ps
+  in
+    checkPrefixes validPrefixes && lengthOfByteString addr >= 20
+
+-- | Calculate reward based on attempt count and wallet value
+calculateReward :: Integer -> Integer -> Integer -> Integer
+calculateReward baseValue attemptCount maxAttempts =
+  let
+    -- The fewer attempts used, the higher the reward
+    attemptsRemaining = maxAttempts - attemptCount
+    bonusPercentage = (attemptsRemaining * 100) `divide` maxAttempts
+    bonusValue = (baseValue * bonusPercentage) `divide` 100
+  in
+    baseValue + (if attemptCount < maxAttempts then bonusValue else 0)
+
+-- | Validate a time range is within expected bounds
+validateTimeRange :: Interval POSIXTime -> POSIXTime -> POSIXTime -> Bool
+validateTimeRange range minTime maxTime =
+  let
+    minBound = strictLowerBound minTime
+    maxBound = strictUpperBound maxTime
+    validMinBound = case ivFrom range of
+      LowerBound t _ -> t >= minBound
+      _ -> False
+    validMaxBound = case ivTo range of
+      UpperBound t _ -> t <= maxBound
+      _ -> False
+  in
+    validMinBound && validMaxBound
+
+-- | Helper to convert a String to BuiltinByteString
+stringToBuiltinByteString :: Haskell.String -> BuiltinByteString
+stringToBuiltinByteString = Builtins.toBuiltin 
