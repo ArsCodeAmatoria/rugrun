@@ -5,6 +5,37 @@ import { motion } from 'framer-motion';
 import { useCardano } from '@/providers/CardanoProvider';
 import WalletItem from './WalletItem';
 import ConnectWalletButton from './ConnectWalletButton';
+import { OnChainWallet } from '@/utils/cardanoBridge';
+import { WalletData, WalletType, RugStatus, RugDatum, DecoyDatum } from '@/utils/haskellSimulation';
+import { generateUUID } from '@/utils/haskellSimulation';
+
+// Adapter function to convert OnChainWallet to WalletData
+const adaptOnChainWallet = (wallet: OnChainWallet, index: number): WalletData => {
+  const balance = parseInt(wallet.assets[0]?.quantity || '0');
+  
+  // Create appropriate datum based on wallet type
+  const datum = wallet.type === 'real' 
+    ? {
+        rugSecretHash: 'mockHash', // In a real app we'd extract this from the datum
+        rugStatus: RugStatus.Unclaimed,
+        rugCreatorPkh: 'mockCreatorPkh'
+      } as RugDatum
+    : { 
+        decoyClue: 'This is a decoy wallet', 
+        decoyBurnOnUse: false 
+      } as DecoyDatum;
+  
+  return {
+    id: generateUUID(),
+    address: wallet.address,
+    type: wallet.type === 'real' ? WalletType.RealWallet : WalletType.DecoyWallet,
+    datum,
+    balance,
+    clue: wallet.type === 'real' 
+      ? 'This wallet contains the real funds. Find the right secret to claim them.'
+      : `Decoy wallet #${index + 1}. Look elsewhere for the real prize.`
+  };
+};
 
 const Wallets: React.FC = () => {
   const { 
@@ -111,13 +142,17 @@ const Wallets: React.FC = () => {
 
       {connectedWallet && !isLoading && gameWallets.length > 0 && (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {gameWallets.map((wallet, index) => (
-            <WalletItem
-              key={wallet.address}
-              wallet={wallet}
-              index={index}
-            />
-          ))}
+          {gameWallets.map((onChainWallet, index) => {
+            // Convert OnChainWallet to WalletData
+            const walletData = adaptOnChainWallet(onChainWallet, index);
+            return (
+              <WalletItem
+                key={walletData.address}
+                wallet={walletData}
+                index={index}
+              />
+            );
+          })}
         </div>
       )}
 

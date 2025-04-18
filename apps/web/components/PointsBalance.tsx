@@ -1,6 +1,6 @@
 'use client'
 
-import React, { useEffect, useState } from 'react'
+import React, { useEffect, useState, useCallback } from 'react'
 import { useApi } from '@/providers/ApiProvider'
 import { motion } from 'framer-motion'
 
@@ -10,7 +10,7 @@ const PointsBalance: React.FC<{ userAddress?: string }> = ({ userAddress }) => {
   const [isRefreshing, setIsRefreshing] = useState(false)
   const { getUserPoints, error, clearError } = useApi()
 
-  const fetchBalance = async () => {
+  const fetchBalance = useCallback(async () => {
     try {
       setIsRefreshing(true)
       clearError()
@@ -25,11 +25,11 @@ const PointsBalance: React.FC<{ userAddress?: string }> = ({ userAddress }) => {
       setIsRefreshing(false)
       setIsLoading(false)
     }
-  }
+  }, [getUserPoints, userAddress, clearError])
 
   useEffect(() => {
     fetchBalance()
-  }, [userAddress, fetchBalance])
+  }, [fetchBalance])
 
   return (
     <div className="w-full max-w-sm mx-auto p-4">

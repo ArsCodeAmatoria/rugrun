@@ -4,7 +4,7 @@ import crypto from 'crypto';
  * Generate a UUID v4 compatible string
  * This is a fallback for environments where crypto.randomUUID isn't available
  */
-function generateUUID(): string {
+export function generateUUID(): string {
   // Create a manual implementation of UUID v4
   const getRandomValues = () => {
     // Use crypto.getRandomValues in a browser environment if available
